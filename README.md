@@ -1,5 +1,5 @@
 # Casper
-Discord CasperBot Source Code
+Discord CasperBot Source Code,
 This bot uses Discord.js 11 on Node.js.
 
 ## How to set up: 
