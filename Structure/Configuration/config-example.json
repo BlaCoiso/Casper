@@ -1,8 +1,7 @@
 {
-  "token": "Token", //Your bot's token
-  "prefix": "=", //Your bot's prefix
+  "token": "Token", 
+  "prefix": "=", 
 
-  "dev_server": "0", //ID of bot server, the server contains the dev role
-  "dev_role": "0" //ID of the dev role in the dev server
+  "dev_server": "0", 
+  "dev_role": "0" 
 }
-//Example for config
