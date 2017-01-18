@@ -24,7 +24,7 @@ module.exports = {
 			"Other Stats\n" +
 			" - Users: " + Client.users.size + "\n" +
 			" - Guilds: " + Client.guilds.size + "\n" +
-            " - Created by: BlaCoiso#2018, Greg#5821, Samuel#1101"
+            " - Created by: BlaCoiso#2018, Greg#5821, Samuel#1101, gotkeyzjr#6283"
 		);
     }
 }
