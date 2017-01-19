@@ -16,11 +16,13 @@ module.exports = {
                 this.lenny(message);
             } else if (command == "bam") {
               this.bam(message);
+            } else if (command == "between") {
+              this.between(message)
             }
         }
     },
-    handles: ["flip", "coinflip", "eightball", "8ball", "ball", "lenny", "lennyface", "bam"],
-    helpMessage: "**Fun commands**:\n `coinflip`: Flips a coin.\n `8ball` Ask the 8ball something.\n `lenny`: Gives a random lenny face.\n `bam`: Smashes the mentioned person with a hammer.\n",
+    handles: ["flip", "coinflip", "eightball", "8ball", "ball", "lenny", "lennyface", "bam", "random", "between"],
+    helpMessage: "**Fun commands**:\n `coinflip`: Flips a coin.\n `8ball` Ask the 8ball something.\n `lenny`: Gives a random lenny face.\n `bam`: Smashes the mentioned person with a hammer.\n`between`: Finds a random number between the two you specified.\n",
     flip: function (message) {
         var resp = ["https://i.imgur.com/wIwZGxn.png", "https://i.imgur.com/pt3XnS0.png"];
         message.channel.sendFile("" + resp[Math.floor(Math.random() * resp.length)]);
@@ -43,5 +45,21 @@ module.exports = {
 		} else {
 			message.reply('Please mention someone to bam.');
 		}
-	}
+	},
+   between: function (message) {
+     const args = message.content.split(" ");
+     if(!args[1]) {
+       message.reply("You need two numbers to randomly find a number in-between.");
+     } else {
+       if(!args[3]) {
+         if(!isNaN(Math.floor(Math.random() * ((args[2]-args[1])+1) + args[2]))) {
+           message.reply(Math.floor(Math.random() * ((args[2]-args[1])+1) + args[2]));
+         } else {
+           message.reply("Result is not a number.")
+         }
+       } else {
+         message.reply("You have too many arguments!")
+       }
+     }
+   }
 }
