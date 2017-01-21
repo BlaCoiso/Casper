@@ -34,7 +34,7 @@ module.exports = {
         message.channel.sendMessage("" + responses[Math.floor(Math.random() * responses.length)]);
     },
     urban: function(message, data, params) {
-        var search = params.join("-");
+        var search = params.join(" ");
         if (search.length == 0) {
             message.channel.sendMessage("Usage: defines words from the urban dictionary\n`=urban [word]`")
         } else {
