@@ -36,7 +36,7 @@ module.exports = {
     urban: function(message, data, params) {
         var search = params.join(" ");
         if (search.length == 0) {
-             message.channel.sendMessage("`" + data.prefix + "urban`: Defines words from the Urban Dictionary.\nUsage: `" + data.prefix + "urban {word to define}`");
+             message.channel.sendMessage("`" + data.prefix + "urban`: Defines words from the Urban Dictionary.\nUsage: `" + data.prefix + "urban <word to define>`");
         } else {
             var url = `http://api.urbandictionary.com/v0/define?term=${search}`
             request(url, (error, result, body) => {
