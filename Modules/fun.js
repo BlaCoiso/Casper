@@ -98,7 +98,7 @@ module.exports = {
     giphy: function(message, data, params) {
         var search = params.join(" ");
         if (search.length == 0) {
-            message.channel.sendMessage("`" + data.prefix + "giphy`: Gets gifs from the Giphy\nUsage: `" + data.prefix + "giphy <term to search>`");
+            message.channel.sendMessage("`" + data.prefix + "giphy`: Gets gifs from Giphy\nUsage: `" + data.prefix + "giphy <term to search>`");
         } else {
             gif.search({
                 q: search,
