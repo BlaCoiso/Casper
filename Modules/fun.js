@@ -3,7 +3,9 @@
 // | Type: MODULE
 // | Function: Fun / Shitpost Commands
 // |_____________________________________
+
 const request = require('request');
+const gif = require('giphy-api')('dc6zaTOxFJmzC'); //<= public api key
 
 module.exports = {
     handler: function(message, command, params, config, data) {
@@ -16,10 +18,12 @@ module.exports = {
                 this.lenny(message);
             } else if (command == "urban" || command == "urbandict" || command == "urbandictionary") {
                 this.urban(message, data, params);
+            } else if (command == "giphy" || command == "gifr" || command == "gify") {
+                this.giphy(message, data, params);
             }
         }
     },
-    handles: ["flip", "coinflip", "eightball", "8ball", "ball", "lenny", "lennyface", "urban"],
+    handles: ["flip", "coinflip", "eightball", "8ball", "ball", "lenny", "lennyface", "urban", "giphy", "gifr", "gify"],
     helpMessage: "**Fun commands**:\n `coinflip`: Flips a coin.\n `8ball` Ask the 8ball something.\n `lenny`: Gives a random lenny face.\n`urban`: Defines words from the Urban Dictionary\n",
     flip: function(message) {
         var resp = ["https://i.imgur.com/wIwZGxn.png", "https://i.imgur.com/pt3XnS0.png"];
@@ -36,7 +40,7 @@ module.exports = {
     urban: function(message, data, params) {
         var search = params.join(" ");
         if (search.length == 0) {
-             message.channel.sendMessage("`" + data.prefix + "urban`: Defines words from the Urban Dictionary.\nUsage: `" + data.prefix + "urban <word to define>`");
+            message.channel.sendMessage("`" + data.prefix + "urban`: Defines words from the Urban Dictionary.\nUsage: `" + data.prefix + "urban <word to define>`");
         } else {
             var url = `http://api.urbandictionary.com/v0/define?term=${search}`
             request(url, (error, result, body) => {
@@ -44,7 +48,7 @@ module.exports = {
                     console.error(error);
                 } else {
                     try {
-                        var urban = JSON.parse(body);;
+                        var urban = JSON.parse(body);
                         var urbanEmbed = {
                             color: 15113758,
                             author: {
@@ -87,6 +91,32 @@ module.exports = {
                             color: 15113758
                         });
                     }
+                }
+            });
+        }
+    },
+    giphy: function(message, data, params) {
+        var search = params.join(" ");
+        if (search.length == 0) {
+            message.channel.sendMessage("`" + data.prefix + "giphy`: Gets gifs from the Giphy\nUsage: `" + data.prefix + "giphy <term to search>`");
+        } else {
+            gif.search({
+                q: search,
+                limit: 1
+            }, function(err, res) {
+                try {
+                    var giphyEmbed = new data.Discord.RichEmbed()
+                        .setImage(`https://media.giphy.com/media/${res.data[0].id}/giphy.gif` ? `https://media.giphy.com/media/${res.data[0].id}/giphy.gif` : `https://media.giphy.com/media/${res.data[0].id}/giphy.mp4`)
+                        .setFooter("Powered by Giphy")
+                        .setColor(15113758);
+                    message.channel.sendEmbed(giphyEmbed);
+                } catch (error) {
+                    console.log("Error on giphy\n" + error);
+                    message.channel.sendEmbed({
+                        title: "¯\\\_(ツ)_/¯",
+                        description: `I couldn't find any gifs matching *${search}*`,
+                        color: 15113758
+                    });
                 }
             });
         }
