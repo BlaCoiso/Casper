@@ -10,7 +10,7 @@ var USR = require('../../Managers/usercheck.js')
 // Modules
 var LoadedModules = ["fun", "links", "stats", "eval", "utils", "mod", "config"];
 var CasperModules = {};
-var cmdNoDM = "This command is not available in direct messages.";
+const cmdNoDM = "This command is not available in direct messages.";
 loadModules();
 
 module.exports = {
@@ -33,10 +33,10 @@ module.exports = {
                         var modPerms = [];
                         if (!isDM) {
                             isMod = USR.checkMod(Client, message.author, DB, message.guild);
-                            isAdmin = USR.checkAdmin(Client, message.author, DB, message.guild);
+                            isAdmin = USR.checkAdmin(Client, message.author, DB, message.guild) || message.member == message.guild.owner;
                             modPerms = USR.getModPerms(DB);
                         }
-                        var messageCfg = { isDM: isDM, mod: isMod || isAdmin, admin: isAdmin, modPerms: modPerms, prefix: prefix, defPrefix: Configuration.getConfig().prefix, isDev: isBotDev, Discord: Discord, client: Client };
+                        var messageCfg = { isDM: isDM, mod: isMod || isAdmin, admin: isAdmin, modPerms: modPerms, prefix: prefix, defPrefix: Configuration.getConfig().prefix, isDev: isBotDev, Discord: Discord, client: Client, userFind: USR.userFind, noDM: cmdNoDM, isTest: Configuration.getConfig().testVersion };
                         //TODO: Allow modules to be loaded/removed
                         //TODO: Implement help and fetch help messages from modules
                         // Generic
@@ -48,7 +48,7 @@ module.exports = {
                             loadModules();
                             message.reply("Reloaded modules :thumbsup:");
                         }
-                        else if (command == "help" || command == "list" || command == "commandlist") {
+                        else if (command == "help" || command == "list" || command == "commandlist" || command == "commands") {
                             if (params.length == 0) {
                                 var help = "**List of commands**: (*prefix is " + prefix + "*)\n `help`: Shows this message, use `" + prefix + "help [command name]` to get help for a specific command.\n" +
                                     " `ping`: Shows the bot latency.\n" +
@@ -65,7 +65,21 @@ module.exports = {
                                 message.author.sendMessage(help);
                                 message.channel.sendMessage("Help has been sent to DMs.");
                             } else {
-                                //TODO: Find command in module
+                                var help = null;
+                                for (var module in CasperModules) {
+                                    if (LoadedModules.indexOf(module.toLowerCase()) != -1) {
+                                        var mod = CasperModules[module];
+                                        if (mod.handles.indexOf(params[0]) != -1 && mod.help) {
+                                            help = mod.help(params[0]);
+                                            if (help) {
+                                                message.channel.sendMessage("`" + prefix + params[0] + "`: " + help[0] + "\nUsage: `" + prefix + params[0] + " " + help[1] + "`");
+                                            }
+                                        }
+                                    }
+                                }
+                                if (!help) {
+                                    message.channel.sendMessage("Command not found.");
+                                }
                             }
                         }
                         else {
@@ -73,14 +87,20 @@ module.exports = {
                                 if (LoadedModules.indexOf(module.toLowerCase()) != -1) {
                                     var mod = CasperModules[module];
                                     if (mod.handles.indexOf(command) != -1) {
-                                        mod.handler(message, command, params, DB, messageCfg);
+                                        try {
+                                            mod.handler(message, command, params, DB, messageCfg);
+                                        } catch (e) {
+                                            message.channel.sendMessage("Error on command **" + command + "** from module **" + module + "**: " + e.message);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            } catch (e) { console.error("Error while processing command: " + e.message); }
+            } catch (e) {
+                message.channel.sendMessage("Error while processing command \"" + message + "\": " + e.message);
+            }
         });
     }
 }
