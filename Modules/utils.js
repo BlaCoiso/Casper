@@ -122,7 +122,7 @@ module.exports = {
             };
             var SinfoEmbed = new data.Discord.RichEmbed()
                 .setAuthor(`${message.guild.name} | ${message.guild.id}`, message.guild.iconURL ? message.guild.iconURL : message.client.user.displayAvatarURL)
-                .setThumbnail(message.guild.iconURL ? message.guild.iconURL : message.client.displayAvatarURL)
+                .setThumbnail(message.guild.iconURL ? message.guild.iconURL : message.client.user.displayAvatarURL)
                 .addField("Created", `${message.guild.createdAt.toString().substr(0, 15)},\n${checkDays(message.guild.createdAt)}`, true)
                 .addField("Owner", `${message.guild.owner.user.username}#${message.guild.owner.user.discriminator}`, true)
                 .addField("Region", region[message.guild.region], true)
