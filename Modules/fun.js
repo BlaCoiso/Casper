@@ -133,7 +133,6 @@ module.exports = {
             fml().then(fml => message.channel.sendMessage(fml))
         } catch (error) {
             message.channel.sendMessage("An error happened. FML")
-
         }
     }
 }
