@@ -1,4 +1,4 @@
-﻿
+
 // Module Docs___________________________
 // | Name: Info
 // | Type: MODULE
@@ -18,7 +18,7 @@ module.exports = {
     handles: ["github", "botcode", "invite", "invites"],
     helpMessage: "**Bot links**:\n `github`: Gives the link for the GitHub\n `invite`: Gives the bot invite link.\n",
     github: function (message) {
-        message.reply("**Source Code**\n  - https://github.com/sammyvsparks/CasperProject/ ");
+        message.reply("**Source Code**\n  - https://github.com/GregoryGregoryGregory/Casper/ ");
     },
     invite: function (message) {
         message.reply("** My Invites**\n  - Server: https://discord.gg/ARUgyRP\n - Test Server: https://discord.gg/88YfYME\n  - OAuth2: https://discordapp.com/oauth2/authorize?client_id=240498925189070848&scope=bot&permissions=268823574");
