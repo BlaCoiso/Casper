@@ -38,7 +38,6 @@ module.exports = {
                         }
                         var messageCfg = { isDM: isDM, mod: isMod || isAdmin, admin: isAdmin, modPerms: modPerms, prefix: prefix, defPrefix: Configuration.getConfig().prefix, isDev: isBotDev, Discord: Discord, client: Client, userFind: USR.userFind, noDM: cmdNoDM, isTest: Configuration.getConfig().testVersion };
                         //TODO: Allow modules to be loaded/removed
-                        //TODO: Implement help and fetch help messages from modules
                         // Generic
                         if (command == "ping") {
                             CasperModules.Utils.ping(message);
@@ -90,7 +89,7 @@ module.exports = {
                                         try {
                                             mod.handler(message, command, params, DB, messageCfg);
                                         } catch (e) {
-                                            message.channel.sendMessage("Error on command **" + command + "** from module **" + module + "**: " + e.message);
+                                            message.channel.sendMessage("**" + e.name + "** on command **" + command + "** from module **" + module + "**: " + e.message);
                                         }
                                     }
                                 }

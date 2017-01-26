@@ -1,7 +1,8 @@
 {
-  "token": "Token", 
-  "prefix": "=", 
+  "token": "Token goes here",
+  "prefix": "=",
 
-  "dev_server": "0", 
-  "dev_role": "0" 
+  "dev_server": "0",
+  "dev_role": "0",
+  "testVersion": false
 }

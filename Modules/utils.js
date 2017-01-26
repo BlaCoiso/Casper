@@ -1,16 +1,16 @@
-// Module Docs___________________________
+﻿// Module Docs___________________________
 // | Name: Utils
 // | Type: MODULE
 // | Function: Useful commands
 // |_____________________________________
 
 module.exports = {
-    handler: function(message, command, params, config, data) {
+    handler: function (message, command, params, config, data) {
         try {
             if (this.handles.indexOf(command) != -1) {
                 if (command == "uinfo" || command == "userinfo" || command == "user") {
                     this.userinfo(message, params, data);
-                } else if ((command == "serverinfo" || command == "sinfo" || command == "server") && !data.isDM) {
+                } else if (command == "serverinfo" || command == "sinfo" || command == "server") {
                     this.serverinfo(message, data);
                 } else if (command == "yt" || command == "youtube" || command == "ytvideo" || command == "ytvid") {
                     //this.yt(message, data, params, Youtube); //Youtube is defined where?? Also, fun.js
@@ -27,7 +27,7 @@ module.exports = {
     handles: ["uinfo", "userinfo", "user", "serverinfo", "sinfo", "server", "yt", "youtube", "ytvideo", "ytvid", "role", "roleinfo", "rinfo", "avatar", "icon", "useravatar", "usericon"],
     helpMessage: "**Useful commands**:\n `userinfo`: Gives information about an user.\n `serverinfo`: Gives information about the server.\n" +
         " `roleinfo`: Gives information about a role.\n `youtube`: Searches for a youtube video (**Note: Currently unimplemented**)\n `avatar`: Shows the user's avatar.\n",
-    help: function(command) {
+    help: function (command) {
         var helpVal = [];
         switch (command) {
             case "uinfo":
@@ -63,7 +63,7 @@ module.exports = {
         }
         return helpVal;
     },
-    userinfo: function(message, params, data) {
+    userinfo: function (message, params, data) {
         try {
             var user = message.mentions.users.first() || ((params[0] && params[0] != "") ? data.userFind(data.client, message.guild, params.join(" ")) : null);
             var msg = "";
@@ -104,47 +104,54 @@ module.exports = {
             throw e;
         }
     },
-    serverinfo: function(message, data) {
+    serverinfo: function (message, data) {
         try {
-            var verifLevels = ["None", "Low", "Medium", "(╯°□°）╯︵  ┻━┻"];
-            var region = {
-                "brazil": "Brazil",
-                "eu-central": "Central Europe",
-                "singapore": "Singapore",
-                "us-central": "U.S. Central",
-                "sydney": "Sydney",
-                "us-east": "U.S. East",
-                "us-south": "U.S. South",
-                "us-west": "U.S. West",
-                "eu-west": "Western Europe",
-                "vip-us-east": "VIP U.S. East",
-                "london": "London"
-            };
-            var SinfoEmbed = new data.Discord.RichEmbed()
-                .setAuthor(`${message.guild.name} | ${message.guild.id}`, message.guild.iconURL ? message.guild.iconURL : message.client.user.displayAvatarURL)
-                .setThumbnail(message.guild.iconURL ? message.guild.iconURL : message.client.user.displayAvatarURL)
-                .addField("Created", `${message.guild.createdAt.toString().substr(0, 15)},\n${checkDays(message.guild.createdAt)}`, true)
-                .addField("Owner", `${message.guild.owner.user.username}#${message.guild.owner.user.discriminator}`, true)
-                .addField("Region", region[message.guild.region], true)
-                .addField("Members", message.guild.memberCount, true)
-                .addField("Roles", message.guild.roles.size, true)
-                .addField("Channels", message.guild.channels.size, true)
-                .addField("Verification Level", verifLevels[message.guild.verificationLevel], true)
-                .addField("Default Channel", message.guild.defaultChannel, true)
-                .setColor(15113758);
-            message.channel.sendEmbed(SinfoEmbed);
+            if (data.isDM) {
+                message.reply(data.noDM);
+            } else {
+                var guild = message.guild;
+                var verifLevels = ["None", "Low", "Medium", "Very High (╯°□°）╯︵ ┻━┻"];
+                var region = {
+                    "brazil": "Brazil",
+                    "eu-central": "Central Europe",
+                    "singapore": "Singapore",
+                    "us-central": "U.S. Central",
+                    "sydney": "Sydney",
+                    "us-east": "U.S. East",
+                    "us-south": "U.S. South",
+                    "us-west": "U.S. West",
+                    "eu-west": "Western Europe",
+                    "vip-us-east": "VIP U.S. East",
+                    "london": "London",
+                    "amsterdam": "Amsterdam"
+                };
+                var sinfoEmbed = new data.Discord.RichEmbed()
+                    .setAuthor(guild.name, guild.iconURL ? guild.iconURL : message.client.user.displayAvatarURL)
+                    .setThumbnail(guild.iconURL)
+                    .addField("Created", translateDate(guild.createdAt) + ", **" + checkDays(guild.createdAt) + "**", true)
+                    .addField("ID", guild.id, true)
+                    .addField("Owner", guild.owner.user.username + "#" + guild.owner.user.discriminator, true)
+                    .addField("Region", (region[guild.region] || guild.region), true)
+                    .addField("Members", guild.memberCount + " Users", true)
+                    .addField("Roles", guild.roles.size + " Roles", true)
+                    .addField("Channels", guild.channels.size + " Channels", true)
+                    .addField("Verification Level", verifLevels[guild.verificationLevel], true)
+                    .addField("Default Channel", "#" + guild.defaultChannel.name + " (" + guild.defaultChannel.toString() + ")", true)
+                    .setColor(15113758);
+                message.channel.sendEmbed(sinfoEmbed);
+            }
         } catch (e) {
             throw e;
         }
     },
-    yt: function(message, data, params, Youtube) {
+    yt: function (message, data, params, Youtube) {
         message.youtube.searchVideos("suc", 1) //message.youtube??
-            .then(results => {
-                message.channel.sendMessage(results[0].title);
-            })
-            .catch(console.log);
+        .then(results => {
+            message.channel.sendMessage(results[0].title);
+        })
+        .catch(console.log);
     },
-    ping: function(message) {
+    ping: function (message) {
         try {
             message.channel.sendMessage("Pinging...")
                 .then(msg => {
@@ -154,12 +161,11 @@ module.exports = {
             throw e;
         }
     },
-    roleinfo: function(message, params, data) {
+    roleinfo: function (message, params, data) {
         try {
             if (params.length == 0) {
                 message.channel.sendMessage("`" + data.prefix + "roleinfo`: Gives info about a role. To select a role mention it, or give the name, ID, role position.");
             } else {
-                var RinfoEmbed = new data.Discord.RichEmbed();
                 var roleList = message.guild.roles;
                 var roleParam = params.join(" ");
                 var role = roleList.get(roleParam) || roleList.find("name", roleParam) || roleList.find("position", parseInt(roleParam)) || message.mentions.roles.first();
@@ -170,25 +176,26 @@ module.exports = {
                             memberList.push("**" + member.user.username + "#" + member.user.discriminator + "**");
                         }
                     }
-                    RinfoEmbed.setAuthor(`${role.name} | ${role.id}`, role.hexColor == "#000000" ? `http://www.beautycolorcode.com/8B99A4-80x80.png` : `http://www.beautycolorcode.com/${role.hexColor.replace("#", "")}-80x80.png`)
-                        .setThumbnail(role.hexColor == "#000000" ? `http://www.beautycolorcode.com/8B99A4-80x80.png` : `http://www.beautycolorcode.com/${role.hexColor.replace("#", "")}-80x80.png`)
-                        .addField("Created", `${role.createdAt.toString().substr(0, 15)},\n${checkDays(role.createdAt)}`, true)
+                    var rinfoEmbed = new data.Discord.RichEmbed()
+                        .setAuthor(role.name, message.guild.iconURL ? message.guild.iconURL : message.client.user.displayAvatarURL)
+                        .setThumbnail(message.guild.iconURL)
+                        .addField("ID", role.id, true)
+                        .addField("Created", translateDate(role.createdAt) + ", **" + checkDays(role.createdAt) + "**", true)
                         .addField("Color", role.hexColor, true)
-                        .addField("Separate?", role.hoist.toString().replace("true", "Yes").replace("false", "No"), true)
-                        .addField("Mentionable?", role.mentionable.toString().replace("true", "Yes").replace("false", "No"), true)
-                        .addField("Members with role", role.members.size < 35 ? (memberList.join(", ")) : `Too many users to display. (${role.members.size})` )
-                        .setColor(15113758);
-                    message.channel.sendEmbed(RinfoEmbed)
-                    // message.channel.sendMessage("Info for role **" + role.name + "**:\n-ID: " + role.id + "\n-Color: " + role.hexColor + "\n-Created at " + translateDate(role.createdAt) + " (**" + checkDays(role.createdAt) + "**)\n-Has Separate Category: " + role.hoist + "\n-Mentionable: " + role.mentionable + "\n-Role position: " + role.position + "\n\n-Members with role: " + (role.members.size < 35 ? (memberList.join(", ")) : "__Too many users have the role__. (**" + role.members.size + " users**)"));
+                        .addField("Has Separate Category", role.hoist ? "Yes" : "No", true)
+                        .addField("Mentionable", role.mentionable ? "Yes" : "No", true)
+                        .addField("Members with this role:", (role.members.size < 35 ? (memberList.join(", ")) : "__Too many users have the role__. (**" + role.members.size + " users**)"), true)
+                        .setColor(role.color);
+                    message.channel.sendEmbed(rinfoEmbed);
                 } else {
-                    message.channel.sendMessage("Can't find role.");
+                    message.channel.sendMessage("Can't find the role.");
                 }
             }
         } catch (e) {
             throw e;
         }
     },
-    avatar: function(message, params, data) {
+    avatar: function (message, params, data) {
         try {
             var user = message.author;
             if (params[0] && params[0] != "") {
@@ -199,7 +206,7 @@ module.exports = {
             throw e;
         }
     },
-    testError: function() {
+    testError: function () {
         try {
             throw new Error("Testing error handling");
         } catch (e) {

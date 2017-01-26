@@ -29,7 +29,7 @@ module.exports = {
                 url: "https://discordapp.com/oauth2/authorize?client_id=240498925189070848&scope=bot&permissions=268823574",
                 author: {
                     name: Client.user.username + " Stats and Info",
-                    icon_url: Client.user.displayAvatarURL,
+                    icon_url: Client.user.avatarURL,
                     url: "https://discordapp.com/oauth2/authorize?client_id=240498925189070848&scope=bot&permissions=268823574"
                 },
                 fields: [
@@ -41,6 +41,16 @@ module.exports = {
                   {
                       name: 'Library Version',
                       value: Discord.version,
+                      inline: true
+                  },
+                  {
+                      name: 'Node.js Version',
+                      value: process.version,
+                      inline: true
+                  },
+                  {
+                      name: 'Memory Usage',
+                      value: Math.floor(process.memoryUsage().rss / 10485.76) / 100 + " MB",
                       inline: true
                   },
                   {

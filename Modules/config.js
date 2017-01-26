@@ -9,7 +9,7 @@ module.exports = {
     handler: function (message, command, params, config, data) {
         try {
             if (this.handles.indexOf(command) != -1) {
-                if ((command == "autoconfig" || command == "autoconf") && !data.isDM) {
+                if (command == "autoconfig" || command == "autoconf") {
                     this.autoConfig(message, data, config);
                 } else if (command == "config" || command == "configset" || command == "botconfig" || command == "setconf") {
                     this.setConfig(message, params, config, data);
@@ -43,7 +43,9 @@ module.exports = {
     },
     autoConfig: function (message, data, config) {
         try {
-            if (!config.getData("/autoConf")) {
+            if (data.isDM) {
+                message.reply(data.noDM);
+            } else if (!config.getData("/autoConf")) {
                 var send = "Trying to automatically detect config...";
                 var botMember = message.guild.member(data.client.user);
                 var noPerms = false;
@@ -95,6 +97,8 @@ module.exports = {
                 } catch (e) {
                     throw (e);
                 }
+            } else {
+                message.reply("Config was already generated. To change it, use the `" + data.prefix + "config` command.");
             }
         } catch (e) {
             throw e;
@@ -162,8 +166,8 @@ module.exports = {
                         } else {
                             message.reply("Can't find channel.");
                         }
-                    } else if (cfgval == "modrole" && params[1] && params[1] != "" && params[2] && params[2] != "" && data.admin) {
-                        var role = message.mentions.roles.first() || message.guild.roles.find("name", params[2]);
+                    } else if ((cfgval == "modrole" || cfgval == "modroles") && params[1] && params[1] != "" && params[2] && params[2] != "" && data.admin) {
+                        var role = message.mentions.roles.first() || message.guild.roles.find("name", params.splice(2).join(" "));
                         var roleCfg = config.getData("/modRoles");
                         if (role && params[1].toLowerCase() == "add") {
                             roleCfg.push(role.id);
@@ -181,8 +185,8 @@ module.exports = {
                         } else if (!role) {
                             message.reply("Can't find the role.");
                         }
-                    } else if (cfgval == "adminrole" && params[1] && params[1] != "" && params[2] && params[2] != "" && data.admin) {
-                        var role = message.mentions.roles.first() || message.guild.roles.find("name", params[2]);
+                    } else if ((cfgval == "adminrole" || cfgval == "adminroles") && params[1] && params[1] != "" && params[2] && params[2] != "" && data.admin) {
+                        var role = message.mentions.roles.first() || message.guild.roles.find("name", params.splice(2).join(" "));
                         var roleCfg = config.getData("/adminRoles");
                         if (role && params[1].toLowerCase() == "add") {
                             roleCfg.push(role.id);
@@ -241,6 +245,12 @@ module.exports = {
                         }
                     }
                 }
+            } else if (data.isDM) {
+                message.reply(data.noDM);
+            } else if (!config.getData("/autoConf")) {
+                message.reply("Config hasn't been generated, please run `" + data.prefix + "autoConfig` then try again.");
+            } else if (data.admin || data.isDev) {
+                message.reply("You don't have permissions to run this command");
             }
         } catch (e) {
             throw e;

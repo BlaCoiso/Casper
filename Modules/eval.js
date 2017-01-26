@@ -17,8 +17,11 @@ module.exports = {
     helpMessage: "",
     eval: function (message, params, config, data) {
         let functionToEval = params.join(" ");
+        console.log("User " + message.author.username + "#" + message.author.discriminator + " used eval: " + functionToEval);
         try {
-            message.channel.sendMessage("```js\nInput:\n" + functionToEval + "\n\nOutput:\n" + eval(functionToEval) + "```");
+            var result = eval(functionToEval);
+            if (result && result.toString().toLowerCase().includes(data.client.token.toLowerCase())) result = "Contains bot's token, censored.";
+            message.channel.sendMessage("```js\nInput:\n" + functionToEval + "\n\nOutput:\n" + result + "```");
         } catch (err) {
             message.channel.sendMessage("```js\nInput:\n" + functionToEval + "\n\nError:\n" + err.message + "```");
         }
