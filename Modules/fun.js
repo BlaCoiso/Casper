@@ -4,9 +4,9 @@
 // | Function: Fun / Shitpost Commands
 // |_____________________________________
 
-const fml = require('random_fml')
-const request = require('request');
-const gif = require('giphy-api')('dc6zaTOxFJmzC'); //<= public api key
+const fml = require("random_fml")
+const request = require("request");
+const gif = require("giphy-api")("dc6zaTOxFJmzC"); //<= public api key
 
 
 module.exports = {
@@ -89,7 +89,7 @@ module.exports = {
                         };
                         message.channel.sendEmbed(urbanEmbed);
                     } catch (error) {
-                        console.log("ERROR ON URBAN GIT FUCKING GUD\n" + error.message);
+                        console.log("Error on urban\n" + error.message);
                         message.channel.sendEmbed({
                             title: "¯\\\_(ツ)_/¯",
                             description: `There isn't a definition for *${search}* yet.`,
