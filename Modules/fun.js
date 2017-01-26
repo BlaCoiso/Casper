@@ -4,8 +4,10 @@
 // | Function: Fun / Shitpost Commands
 // |_____________________________________
 
+const fml = require('random_fml')
 const request = require('request');
 const gif = require('giphy-api')('dc6zaTOxFJmzC'); //<= public api key
+
 
 module.exports = {
     handler: function(message, command, params, config, data) {
@@ -20,10 +22,13 @@ module.exports = {
                 this.urban(message, data, params);
             } else if (command == "giphy" || command == "gifr" || command == "gify") {
                 this.giphy(message, data, params);
+            } else if (command == "fml" || command == "fuckmylife" || command == "fmylife") {
+                this.fml(message);
+
             }
         }
     },
-    handles: ["flip", "coinflip", "eightball", "8ball", "ball", "lenny", "lennyface", "urban", "giphy", "gifr", "gify"],
+    handles: ["flip", "coinflip", "eightball", "8ball", "ball", "lenny", "lennyface", "urban", "giphy", "gifr", "gify", "fml", "fuckmylife", "fmylfe"],
     helpMessage: "**Fun commands**:\n `coinflip`: Flips a coin.\n `8ball` Ask the 8ball something.\n `lenny`: Gives a random lenny face.\n`urban`: Defines words from the Urban Dictionary\n",
     flip: function(message) {
         var resp = ["https://i.imgur.com/wIwZGxn.png", "https://i.imgur.com/pt3XnS0.png"];
@@ -102,11 +107,13 @@ module.exports = {
         } else {
             gif.search({
                 q: search,
-                limit: 1
             }, function(err, res) {
                 try {
+                    var result = Math.floor(Math.random() * Math.min(2, res.data.length))
                     var giphyEmbed = new data.Discord.RichEmbed()
-                        .setImage(`https://media.giphy.com/media/${res.data[0].id}/giphy.gif` ? `https://media.giphy.com/media/${res.data[0].id}/giphy.gif` : `https://media.giphy.com/media/${res.data[0].id}/giphy.mp4`)
+                        .setImage(`https://media.giphy.com/media/${res.data[result].id}/giphy.gif` ? `https://media.giphy.com/media/${res.data[result].id}/giphy.gif` : `https://media.giphy.com/media/${res.data[result].id}/giphy.mp4`)
+                        .addField("Source", res.data[result].source ? res.data[result].source : res.data[result].url, true)
+                        .addField("Rating", res.data[result].rating.replace("r", "R  - Adult content").replace("g", "G - Safe for all").replace("pg", "PG - Parental Guidance Suggested") ? res.data[result].rating.replace("r", "R  - Adult content").replace("g", "G - Safe for all").replace("pg", "PG - Parental Guidance Suggested") : "None", false)
                         .setFooter("Powered by Giphy")
                         .setColor(15113758);
                     message.channel.sendEmbed(giphyEmbed);
@@ -119,6 +126,14 @@ module.exports = {
                     });
                 }
             });
+        }
+    },
+    fml: function(message) {
+        try {
+            fml().then(fml => message.channel.sendMessage(fml))
+        } catch (error) {
+            message.channel.sendMessage("An error happened. FML")
+
         }
     }
 }
