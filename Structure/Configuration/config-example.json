@@ -1,8 +1,11 @@
 {
-  "token": "Token goes here",
+  "token": "Your token here",
+  "loggerWebhook": [ "webhook ID", "webhook token, remove loggerWebhook from config to disable this" ],
+
   "prefix": "=",
 
-  "dev_server": "0",
-  "dev_role": "0",
-  "testVersion": false
+  "testVersion": false,
+  "dev_server": "dev server ID",
+  "dev_role": "dev role ID",
+  "modules": [ "core", "utils", "mod", "fun", "config", "custom" ]
 }

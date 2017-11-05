@@ -1,117 +1,68 @@
 ﻿// Module Docs___________________________
-// | Name: Utils
-// | Type: MODULE
-// | Function: Useful commands
+// | Name: Moderator
+// | Type: CASPER_MODULE 
+// | Function: Moderation commands/features
 // |_____________________________________
 
 module.exports = {
-    handler: function (message, command, params, config, data) {
-        try {
-            if (this.handles.indexOf(command) != -1) {
-                if (command == "uinfo" || command == "userinfo" || command == "user") {
-                    this.userinfo(message, params, data);
-                } else if (command == "serverinfo" || command == "sinfo" || command == "server") {
-                    this.serverinfo(message, data);
-                } else if (command == "yt" || command == "youtube" || command == "ytvideo" || command == "ytvid") {
-                    //this.yt(message, data, params, Youtube); //Youtube is defined where?? Also, fun.js
-                } else if (command == "role" || command == "roleinfo" || command == "rinfo") {
-                    this.roleinfo(message, params, data);
-                } else if (command == "avatar" || command == "icon" || command == "useravatar" || command == "usericon") {
-                    this.avatar(message, params, data);
+    handles(event) {
+        return ["message"].includes(event);
+    },
+    fullName: "Utility",
+    commands: [
+        {
+            name: "userinfo",
+            description: "Gives information about a user, this command accepts IDs, names, or mentions.",
+            allowDM: true,
+            aliases: ["user", "uinfo", "whois"],
+            usage: "[user]",
+            run(msg, args) {
+                let user = args.utils.userFind(msg.client, msg.guild, args.paramsJoined) || msg.mentions.users.first();
+                let notFound = false;
+                if (!user) {
+                    user = msg.author;
+                    if (args.params.length != 0) notFound = true;
                 }
+                let userGuild = !args.isDM ? msg.guild.member(user) : null;
+                let roles = userGuild ? userGuild.roles.filter(r=>r.name != "@everyone").array() : null;
+                let status = {
+                    dnd: "Do Not Disturb",
+                    offline: "Offline/Invisible",
+                    online: "Online",
+                    idle: "Idle"
+                };
+                let userAvatar = user.displayAvatarURL.replace("jpg", "png");
+                let userStreamStatus = user.presence.game ? user.presence.game.streaming ? `Streaming **[${args.Discord.escapeMarkdown(user.presence.game.name)}](${user.presence.game.url})**` : `Playing **${args.Discord.escapeMarkdown(user.presence.game.name)}**` : null;
+                let userTag = `${user.username}#${user.discriminator}${user.bot ? " [BOT]" : ""}`;
+                let userNickname = userGuild ? userGuild.nickname : null;
+                let userCreated = `${args.utils.translateDate(user.createdAt)}, **${args.utils.checkDays(user.createdAt)}**`;
+                let userJoined = userGuild ? `${args.utils.translateDate(userGuild.joinedAt)}, **${args.utils.checkDays(userGuild.joinedAt)}**` : null;
+                let userRoles = roles ? args.Discord.escapeMarkdown(
+                    roles.sort((b, c) => c.position - b.position).map(e => e.name).join(", ")) : null;
+                let userID = "";
+                if (notFound) userID = `User wasn't found. | ID: ${user.id}`;
+                else if (userGuild || args.isDM) userID = `ID: ${user.id}`;
+                else userID = `User is not in server | ID: ${user.id}`;
+                let uEmbed = new args.embed().setColor(args.color).setThumbnail(userAvatar).setFooter(userID);
+                userStreamStatus ? uEmbed.setDescription(userStreamStatus) : null;
+                uEmbed.setAuthor(userTag, userAvatar)
+                    .addField("Created", userCreated);
+                userJoined ? uEmbed.addField("Joined", userJoined) : null;
+                uEmbed.addField("Status", status[user.presence.status], true)
+                    .addField("Avatar URL", `[Click Here!](${userAvatar})`, true);
+                userRoles ? uEmbed.addField("Roles", userRoles, true) : null;
+                userNickname ? uEmbed.addField("Nickname", userNickname, true) : null;
+                let uText = `**User**: ${user.tag}\n${userNickname ? "**Nickname**: " + userNickname + "\n" : ""}**Created at**: ${userCreated}\n${userJoined ? "**Joined at:**: " + userJoined + "\n" : ""}**Status**: ${status[user.presence.status]}\n**Avatar URL**: ${userAvatar}\n${userRoles ? "**Roles**: " + userRoles + "\n" : ""}`;
+                return { text: uText, embed: uEmbed };
             }
-        } catch (e) {
-            throw e;
-        }
-    },
-    handles: ["uinfo", "userinfo", "user", "serverinfo", "sinfo", "server", "yt", "youtube", "ytvideo", "ytvid", "role", "roleinfo", "rinfo", "avatar", "icon", "useravatar", "usericon"],
-    helpMessage: "**Useful commands**:\n `userinfo`: Gives information about an user.\n `serverinfo`: Gives information about the server.\n" +
-        " `roleinfo`: Gives information about a role.\n `youtube`: Searches for a youtube video (**Note: Currently unimplemented**)\n `avatar`: Shows the user's avatar.\n",
-    help: function (command) {
-        var helpVal = [];
-        switch (command) {
-            case "uinfo":
-            case "userinfo":
-            case "user":
-                helpVal = ["Gives information about an user. If the user isn't specified or not found, it will show info about your account.", "[user]"];
-                break;
-            case "serverinfo":
-            case "sinfo":
-            case "server":
-                helpVal = ["Gives information about the current server.", ""];
-                break;
-            case "yt":
-            case "youtube":
-            case "ytvideo":
-            case "ytvid":
-                helpVal = ["Shows details of a random YouTube video matching the search.", "<search terms>"];
-                break;
-            case "role":
-            case "roleinfo":
-            case "rinfo":
-                helpVal = ["Gives information about a role.", "<role>"];
-                break;
-            case "avatar":
-            case "icon":
-            case "usericon":
-            case "useravatar":
-                helpVal = ["Shows the user's avatar. If the user isn't specified or not found, it will show your account's avatar.", "[user]"];
-                break;
-            default:
-                helpVal = null;
-                break;
-        }
-        return helpVal;
-    },
-    userinfo: function (message, params, data) {
-        try {
-            var user = message.mentions.users.first() || ((params[0] && params[0] != "") ? data.userFind(data.client, message.guild, params.join(" ")) : null);
-            var msg = "";
-            if (params[0] && !user) {
-                msg += "User wasn't found.\n";
-                user = message.author;
-            } else if (!user) {
-                user = message.author;
-            }
-            var userGuild = (data.isDM ? null : message.guild.member(user));
-            if (!data.isDM && !userGuild) msg += "Note: User isn't on this server.\n";
-            var game = user.presence.game;
-            var gameName = game ? game.name : "Nothing";
-            var userRoles = (!userGuild ? null : userGuild.roles.array());
-            if (userGuild) {
-                userRoles.shift(); //takes @evryone
-                for (var i = 0; i < userRoles.length; ++i) {
-                    userRoles[i] = userRoles[i].name;
-                }
-                userRoles = userRoles.join(", ");
-            }
-            var status = {
-                dnd: "Do Not Disturb",
-                offline: "Offline/Invisible",
-                online: "Online",
-                idle: "Idle"
-            };
-            msg += "Info for **" + user.username + "#" + user.discriminator + "** | (" + user.id + ") " + (user.bot ? "**[BOT]**" : "") + "\n";
-            msg += "\n -**Created in** " + translateDate(user.createdAt) + " (**" + checkDays(user.createdAt) + "**)\n"
-            msg += (!userGuild ? "" : (" -**Joined in** " + translateDate(userGuild.joinedAt) + " (**" + checkDays(userGuild.joinedAt) + "**)\n"));
-            msg += " -**User Status**: " + status[user.presence.status] + "\n";
-            msg += " -**Playing**: " + gameName + "\n";
-            msg += (!userGuild ? "" : (" -**Nickname**: " + (userGuild.nickname ? userGuild.nickname : "None") + "\n"));
-            msg += (!userGuild ? "" : (" -**User roles**: " + (userRoles.length > 0 ? userRoles : "*user doesn't have any roles*") + "\n"));
-            msg += (user.avatarURL ? (" -**User avatar**: " + user.avatarURL) : "");
-            message.channel.sendMessage(msg);
-        } catch (e) {
-            throw e;
-        }
-    },
-    serverinfo: function (message, data) {
-        try {
-            if (data.isDM) {
-                message.reply(data.noDM);
-            } else {
-                var guild = message.guild;
-                var verifLevels = ["None", "Low", "Medium", "Very High (╯°□°）╯︵ ┻━┻"];
-                var region = {
+        },
+        {
+            name: "serverinfo",
+            description: "Gives information about the server or any other server Casper is in, to get info on another server, provide the ID.",
+            aliases: ["server", "sinfo", "guild"],
+            run(msg, args) {
+                let guild = msg.client.guilds.get(args.paramsJoined) || msg.guild;
+                let region = {
                     "brazil": "Brazil",
                     "eu-central": "Central Europe",
                     "singapore": "Singapore",
@@ -123,114 +74,89 @@ module.exports = {
                     "eu-west": "Western Europe",
                     "vip-us-east": "VIP U.S. East",
                     "london": "London",
-                    "amsterdam": "Amsterdam"
-                };
-                var sinfoEmbed = new data.Discord.RichEmbed()
-                    .setAuthor(guild.name, guild.iconURL ? guild.iconURL : message.client.user.displayAvatarURL)
-                    .setThumbnail(guild.iconURL)
-                    .addField("Created", translateDate(guild.createdAt) + ", **" + checkDays(guild.createdAt) + "**", true)
-                    .addField("ID", guild.id, true)
-                    .addField("Owner", guild.owner.user.username + "#" + guild.owner.user.discriminator, true)
-                    .addField("Region", (region[guild.region] || guild.region), true)
-                    .addField("Members", guild.memberCount + " Users", true)
-                    .addField("Roles", guild.roles.size + " Roles", true)
-                    .addField("Channels", guild.channels.size + " Channels", true)
-                    .addField("Verification Level", verifLevels[guild.verificationLevel], true)
-                    .addField("Default Channel", "#" + guild.defaultChannel.name + " (" + guild.defaultChannel.toString() + ")", true)
-                    .setColor(15113758);
-                message.channel.sendEmbed(sinfoEmbed);
+                    "amsterdam": "Amsterdam",
+                    "hongkong": "Hong Kong",
+                    "vip-amsterdam": "VIP Amsterdam"
+                }; //There might be some missing regions
+                const verifLevels = ["None", "Low", "Medium", "(╯°□°）╯︵ ┻━┻"];
+                let serverFooter = `ID: ${guild.id} | This server has ${guild.memberCount.toLocaleString()} members in total (including bots).`;
+                let serverIcon = guild.iconURL ? guild.iconURL.replace("jpg", "png") : msg.client.user.displayAvatarURL.replace("jpg", "png");
+                let serverCreated = `${args.utils.translateDate(guild.createdAt)}, **${args.utils.checkDays(guild.createdAt)}**`;
+                let serverOwner = `${args.Discord.escapeMarkdown(guild.owner.user.username)}#${guild.owner.user.discriminator}`;
+                let serverRegion = region[guild.region] || guild.region;
+                let serverMembers = guild.members.filter(m => !m.user.bot)
+                let serverMembersCount = serverMembers.filter(m=>m.presence.status != "offline").size.toLocaleString() + " / " + serverMembers.size.toLocaleString();
+                let serverBots = guild.members.filter(m => m.user.bot);
+                let serverBotsCount = serverBots.filter(m=>m.presence.status != "offline").size.toLocaleString() + " / " + serverBots.size.toLocaleString();
+                let serverTextChannels = guild.channels.filter(c => c.type === "text").size.toLocaleString();
+                let serverVoiceChannels = guild.channels.filter(c => c.type === "voice").size.toLocaleString();
+                let serverChannels = `${serverTextChannels} Text and ${serverVoiceChannels} Voice`;
+                let serverVerificationLevel = verifLevels[guild.verificationLevel];
+                let serverRoles = (guild.roles.size - 1).toLocaleString();
+                let sEmbed = new args.embed().setColor(args.color).setFooter(serverFooter)
+                    .setAuthor(guild.name, serverIcon)
+                    .setThumbnail(serverIcon)
+                    .addField("Created", serverCreated)
+                    .addField("Owner", serverOwner, true)
+                    .addField("Region", serverRegion, true)
+                    .addField("Members", serverMembersCount, true)
+                    .addField("Bots", serverBotsCount, true)
+                    .addField("Channels", serverChannels, true)
+                    .addField("Roles", serverRoles, true)
+                    .addField("Verification Level", serverVerificationLevel, true);
+                let sText = `*Server**: ${guild.name}\n**Created at**: ${serverCreated}\n**Owner**: ${serverOwner}\n*Region**: ${serverRegion}\n` +
+                    `**Members**: ${serverMembersCount}\n**Bots**: ${serverBotsCount}\n**Channels**: ${serverChannels}\n**Roles**: ${serverRoles}` +
+                    `\n**Verification Level**: ${serverVerificationLevel}`;
+                return { text: sText, embed: sEmbed };
             }
-        } catch (e) {
-            throw e;
-        }
-    },
-    yt: function (message, data, params, Youtube) {
-        message.youtube.searchVideos("suc", 1) //message.youtube??
-        .then(results => {
-            message.channel.sendMessage(results[0].title);
-        })
-        .catch(console.log);
-    },
-    ping: function (message) {
-        try {
-            message.channel.sendMessage("Pinging...")
-                .then(msg => {
-                    msg.edit("Pong! " + (msg.createdTimestamp - message.createdTimestamp) + "​ms​");
-                }).catch(console.error);
-        } catch (e) {
-            throw e;
-        }
-    },
-    roleinfo: function (message, params, data) {
-        try {
-            if (params.length == 0) {
-                message.channel.sendMessage("`" + data.prefix + "roleinfo`: Gives info about a role. To select a role mention it, or give the name, ID, role position.");
-            } else {
-                var roleList = message.guild.roles;
-                var roleParam = params.join(" ");
-                var role = roleList.get(roleParam) || roleList.find("name", roleParam) || roleList.find("position", parseInt(roleParam)) || message.mentions.roles.first();
-                if (role) {
-                    var memberList = [];
-                    if (role.members.size < 35) {
-                        for (var member of role.members.values()) {
-                            memberList.push("**" + member.user.username + "#" + member.user.discriminator + "**");
-                        }
-                    }
-                    var rinfoEmbed = new data.Discord.RichEmbed()
-                        .setAuthor(role.name, message.guild.iconURL ? message.guild.iconURL : message.client.user.displayAvatarURL)
-                        .setThumbnail(message.guild.iconURL)
-                        .addField("ID", role.id, true)
-                        .addField("Created", translateDate(role.createdAt) + ", **" + checkDays(role.createdAt) + "**", true)
-                        .addField("Color", role.hexColor, true)
-                        .addField("Has Separate Category", role.hoist ? "Yes" : "No", true)
-                        .addField("Mentionable", role.mentionable ? "Yes" : "No", true)
-                        .addField("Members with this role:", (role.members.size < 35 ? (memberList.join(", ")) : "__Too many users have the role__. (**" + role.members.size + " users**)"), true)
-                        .setColor(role.color);
-                    message.channel.sendEmbed(rinfoEmbed);
+        },
+        {
+            name: "avatar",
+            description: "Gives a user's avatar, this command accepts IDs, names, or mentions.",
+            allowDM: true,
+            usage: "[user]",
+            run(msg, args) {
+                let user = args.utils.userFind(msg.client, msg.guild, args.paramsJoined) || msg.mentions.users.first() || msg.author;
+                let avatar = user.displayAvatarURL.replace("jpg", "png");
+                return { embed: new args.embed().setAuthor(user.username, avatar).setImage(avatar).setFooter(`ID: ${user.id}`).setColor(args.color) };
+            }
+        },
+        {
+            name: "roleinfo",
+            description: "Gives info about a role, this command accepts IDs, names, or mentions.",
+            aliases: "role",
+            usage: "<role>",
+            run(msg, args) {
+                if (args.params.length == 0) {
+                    return { text: `\`${args.prefix + args.command}\`: ${this.description}` };
                 } else {
-                    message.channel.sendMessage("Can't find the role.");
+                    let role = args.utils.roleFind(msg.guild, args.paramsJoined);
+                    if (role) {
+                        let colorImg = `http://www.beautycolorcode.com/${role.color === 0 ? "8B99A4" : role.hexColor.split("#").join("")}-80x80.png`
+                        let footer = `ID: ${role.id} | This role is ${role.hoist ? "" : "not "}displayed in the member bar.`;
+                        let members = role.members.size == 0 ? "None" : role.members.map(m => m.user.toString()).join(" ");
+                        let created = `${args.utils.translateDate(role.createdAt)}, **${args.utils.checkDays(role.createdAt)}**`;
+                        let rEmbed = new args.embed().setColor(role.color === 0 ? 9148836 : role.color).setFooter(footer)
+                            .setAuthor(args.Discord.escapeMarkdown(role.name), colorImg).setThumbnail(colorImg)
+                            .addField("Created", created)
+                            .addField("Hex Code", role.hexColor, true).addField("Mentionable", role.mentionable ? "Yes" : "No", true);
+                        members ? rEmbed.addField(`${role.members.size.toLocaleString()} Members`, role.members.size > 35 ? "Too many members to display." : members) : null
+                        return { embed: rEmbed };
+                    } else return { text: "Role wasn't found." };
                 }
             }
-        } catch (e) {
-            throw e;
-        }
-    },
-    avatar: function (message, params, data) {
-        try {
-            var user = message.author;
-            if (params[0] && params[0] != "") {
-                user = message.mentions.users.first() || data.userFind(data.client, message.guild, params.join(" ")) || user;
+        },
+        {
+            name: "roles",
+            description: "Lists roles in the server",
+            aliases: ["rolelist", "listroles"],
+            run(msg, args) {
+                let guild = msg.guild;
+                let roles = args.Discord.escapeMarkdown(guild.roles.filter(r=>r.name != "@everyone").array().sort((b, c) => c.position - b.position).map(r=>r.name).join(", "));
+                let embed = { title: `${(guild.roles.size - 1).toLocaleString()} Roles`, description: roles, color: args.color };
+                let text = `This guild has ${(guild.roles.size - 1).toLocaleString()} roles:\n ${roles}`;
+                return { embed: embed, text: text };
             }
-            message.channel.sendFile(user.displayAvatarURL, user.id + ".jpg");
-        } catch (e) {
-            throw e;
         }
-    },
-    testError: function () {
-        try {
-            throw new Error("Testing error handling");
-        } catch (e) {
-            throw e;
-        }
-    }
-}
-
-function translateDate(date) {
-    const Months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const Days = ["Sat", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    return Days[date.getUTCDay()] + ", " + date.getUTCDate() + " " + Months[date.getUTCMonth()] + " " + date.getUTCFullYear() + " at " + date.getUTCHours() + ":" + zeros(date.getUTCMinutes(), 2) + ":" + zeros(date.getUTCSeconds(), 2) + "." + zeros(date.getUTCMilliseconds(), 3);
-}
-
-function zeros(val, num) {
-    while (val.toString().length < num) {
-        val = "0" + val;
-    }
-    return val;
-}
-
-function checkDays(date) {
-    var now = new Date();
-    var diff = now.getTime() - date.getTime();
-    var days = Math.floor(diff / 86400000);
-    return days + (days == 1 ? " day" : " days") + " ago";
-}
+    ]
+};

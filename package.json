@@ -1,0 +1,13 @@
+{
+  "name": "casper_v3",
+  "version": "3.0.0",
+  "description": "A discord bot with useful commands",
+  "repository": "GregoryGregoryGregory/Casper",
+  "main": "bootup.js",
+  "dependencies": {
+    "discord.js": "^11.2.1",
+    "superagent": "^3.6.0",
+    "node-json-db": "~0.7.3"
+  },
+  "private": true
+}

@@ -7,12 +7,16 @@ const config = require('./config.json');
 
 module.exports = {
 
-    getConfig: function () {
+    getConfig() {
         return config;
     },
 
-    getPrefix: function () {
+    getPrefix() {
         return config.prefix;
+    },
+
+    getModules() {
+        return config.modules;
     }
 
-}
+};

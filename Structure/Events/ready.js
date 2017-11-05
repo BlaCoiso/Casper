@@ -1,4 +1,3 @@
-var JDB = require('node-json-db');
 
 // Module Docs___________________________
 // | Name: Ready Event
@@ -7,56 +6,24 @@ var JDB = require('node-json-db');
 // |_____________________________________
 
 module.exports = {
-
-    enable: function (Client, Config) {
-        var count = 0;
+    enable(Discord, Client, Config, ModuleManager, cfgManager) {
         Client.on('ready', () => {
             if (!Config.getConfig().testVersion) {
-                Client.user.setGame(Config.getConfig().prefix + "help " + "| " + Client.guilds.size + " Servers" + " | " + Client.users.size + " Users");
+                Client.user.setGame(`${Config.getConfig().prefix}help | ${Client.guilds.size} Servers | ${Client.users.size} Users`);
             }
             // Guild Config QuickCheck
+            let count = 0;
             Client.guilds.forEach(guild => {
-                var DB = new JDB(`./Database/Guilds/${guild.id}-settings`, true, true);
-                var version = 2; //Current config version, change when new things added (also change guild_join.js)
-                try {
-                    let testDB = DB.getData(`/name`);
-                    let pref = DB.getData(`/prefix`);
-                    let pref2 = Config.getConfig().prefix;
-                    if (pref == pref2) {
-                        DB.push("/prefix", "", true);
-                    }
-                    let confVers = DB.getData(`/confver`);
-                    if (confVers == 1) {
-                        DB.push("/autoConf", false, true);
-                    }
-                    if (confVers != version) {
-                        throw "Config version doesn't match";
-                    }
-                } catch (e) {
-                    try {
-                        var current = DB.getData("/");
-                        DB.push(`${guild.id}`,
-                            {
-                                name: current.name || guild.name,
-                                prefix: current.prefix || "",
-                                blacklisted: current.blacklisted || false,
-                                autoConf: current.autoConf || false,
-                                modRoles: current.modRoles||[],
-                                adminRoles: current.adminRoles||[],
-                                logChannel: current.logChannel || "",
-                                joinChannel: current.joinChannel || "",
-                                modPerms: current.modPerms||[],
-                                confver: version
-                            }, true
-                        );
-                        count++;
-                    } catch (e) {
-                        console.log("Can't save config: " + e.message);
-                    }
+                if (guild.available) {
+                    let DB = cfgManager.fetchGuildDB(guild);
+                    if (cfgManager.guildConfigInit(guild)) count++;
+                    ModuleManager.handle("guild_init", { guild: guild, config: DB }, Discord, Client, Config);
                 }
-            });
-            console.log(`[Config] Generated ${count} Configurations This Boot.`);
-            console.log("[Client] Ready!");
+            }
+            );
+            console.info(`[Config]: Generated/Updated ${count} Configurations This Boot.`);
+            ModuleManager.handle("ready", null, Discord, Client, Config);
+            console.log("[Client]: Ready!");
         });
     }
-}
+};
