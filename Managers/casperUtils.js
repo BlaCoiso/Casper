@@ -121,7 +121,7 @@ module.exports = {
      * @param {string} check
      */
     roleFind(guild, check) {
-        return guild.roles.get(check) || guild.roles.find(role=>(role.name.toLowerCase() == check.toLowerCase() || role.position == parseInt(check)));
+        return guild.roles.get(check) || guild.roles.find(role => (role.name.toLowerCase() == check.toLowerCase() || role.position == parseInt(check)));
     },
     getUserRole(guild, check, client) {
         if (Array.isArray(check)) {
@@ -220,7 +220,25 @@ module.exports = {
         const now = new Date();
         const diff = now.getTime() - date.getTime();
         const days = Math.floor(diff / 86400000);
+        if (days == 0) return this.getTime(diff / 1000) + " ago";
         return `${days + (days === 1 ? " day" : " days")} ago`;
+    },
+    /**
+     * Translates a time string (00d00h00m00s) into the number of seconds
+     * @param {string}
+     * @returns {number}
+    */
+    parseTimeString(string) {
+        const regex = /(\d+)((?:d)|(?:h)|(?:m)|(?:s?))/g;
+        let match;
+        let total = 0;
+        const mult = { d: 86400, h: 3600, m: 60, s: 1 };
+        while (match = regex.exec(string)) {
+            let amount = parseInt(match[1]);
+            let multiplier = match[2] ? mult[match[2]] : 1;
+            total += amount * multiplier;
+        }
+        return total;
     },
     /**
      * Recursively transforms an object into a string
@@ -236,7 +254,7 @@ module.exports = {
             } else if (typeof value == "boolean" || typeof value == "number") return value.toString();
             else if (typeof value == "object") {
                 if (value == null) return String(value);
-                else if (Array.isArray(value)) return `[${value.map(v=>this.makeString(v, maxIter - 1)).join(", ")}]`;
+                else if (Array.isArray(value)) return `[${value.map(v => this.makeString(v, maxIter - 1)).join(", ")}]`;
                 else {
                     var props = { names: [], values: [] };
                     for (var prop in value) {

@@ -16,10 +16,9 @@ module.exports = {
             else {
                 let needsUpdate = false;
                 let moduleData = DB.readValue("moduleData");
-                for(let module of cfgModules) {
+                for (let module of cfgModules) {
                     let modData = moduleData[module.name];
                     if (!modData || module.checkConfUpdates(modData)) {
-                        console.log(module.name);
                         needsUpdate = true;
                         break;
                     }
@@ -35,7 +34,7 @@ module.exports = {
         try {
             const currentData = cfg.getData();
             let moduleData = currentData.moduleData;
-            for(let module of cfgModules) {
+            for (let module of cfgModules) {
                 moduleData[module.name] = module.generateConfig((moduleData[module.name] || {}), cfg.guild);
             }
             cfg.saveValue("name", cfg.guild.name); //Is this really needed?

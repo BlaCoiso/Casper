@@ -16,6 +16,7 @@ const CasperUtils = require('./casperUtils.js');
 let loggerClient = null;
 var ConfigManager = null;
 var handledEvents = 0;
+var lastMessage;
 
 /** @module */
 module.exports = {
@@ -144,11 +145,11 @@ module.exports = {
             const DBObj = (DB ? DB.getData() : {});
             let prefix = (isDM ? conf.getPrefix() : (DBObj.prefix == "" ? conf.getPrefix() : DBObj.prefix));
             if (message.content.startsWith(prefix) && (DB ? !DB.readValue("blacklisted") : true)) {
+                lastMessage = message.cleanContent;
                 var channel = message.channel;
                 let channelPerms = isDM ? null : message.channel.permissionsFor(message.guild.member(message.client.user));
                 let respondPerms = (isDM ? 2 : (channelPerms.has("SEND_MESSAGES") ? (channelPerms.has("EMBED_LINKS") ? 2 : 1) : 0));
                 let botPerms = isDM ? null : message.guild.member(message.client.user).permissions;
-                respondPerms == 0 ? respondPerms = 2 : null;
                 if (message.content == prefix + "ping") {
                     channel.send("Pinging...").then(msg => {
                         msg.edit(`Pong! ${msg.createdTimestamp - message.createdTimestamp}ms`);
@@ -260,7 +261,7 @@ module.exports = {
                 let hasPerms = true;
                 if (commandObj.perms) {
                     if (typeof commandObj.perms == "string") hasPerms = userPerms.includes(commandObj.perms);
-                    else {
+                    else if (Array.isArray(commandObj.perms) && commandObj.perms.length !== 0) {
                         hasPerms = false;
                         for (let permission of commandObj.perms) {
                             if (userPerms.includes(permission)) hasPerms = true;
@@ -299,7 +300,7 @@ function logError(err) {
             if (typeof err == "string") {
                 loggerClient.send(err);
             } else {
-                loggerClient.send(`A(n) ${err.name} happened: ${err.message}`);
+                loggerClient.send(`A(n) ${err.name} happened: ${err.message}\nLast message handled: ${lastMessage}`);
                 console.error(`A ${err.name} happened: ${err.message}`)
             }
         } else {

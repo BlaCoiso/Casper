@@ -22,7 +22,7 @@ module.exports = {
                 if (args.params.length == 0) {
                     return { text: `\`${args.prefix + args.command}\`: ${this.description}\n**Available special options for custom command response**:\n \`{user}\`: Mentions the user\n \`{user.name}\`: Shows the user's current name\n \`{user.id}\`: Shows the user's ID\n \`{server}\`: Shows the server's name\n \`{server.id}\`: Shows the server's ID\n You can also use \`{0}\`, \`{1}\`, etc for arguments.` };
                 } else {
-                    let commandName = args.params[0];
+                    let commandName = args.params[0].toLowerCase();
                     let customCmds = args.moduleConf.customCommands;
                     let customAliases = args.moduleConf.customAliases;
                     if (args.moduleHandler.findCommand(commandName)) {
@@ -45,16 +45,16 @@ module.exports = {
                             args.setModuleConfig(args.config, "Custom", "customCommands", customCmds);
                             return { text: `A custom command with the name \`${commandName}\` has successfully been created! Use \`editcommand\` to modify it.` };
                         } else {
-                            let filter = m=>m.author.id == msg.author.id;
+                            let filter = m => m.author.id == msg.author.id;
                             args.channel.awaitMessages(filter, { maxMatches: 1, time: 30000, errors: ["time"] })
-                                .then(c=> {
+                                .then(c => {
                                     let cmdContent = c.first().content;
                                     command.out = cmdContent;
                                     customCmds.push(command);
                                     args.setModuleConfig(args.config, "Custom", "customCommands", customCmds);
                                     args.asyncCallback({ text: "Custom command successfully created." });
                                 })
-                                .catch(c=>args.asyncCallback({ text: "User took too long to reply, command creation canceled." }));
+                                .catch(c => args.asyncCallback({ text: "User took too long to reply, command creation canceled." }));
                             return { text: `Creating command \`${commandName}\`... Please enter the command's content.` };
                         }
                     }
@@ -72,7 +72,7 @@ module.exports = {
                     return { text: `\`${args.prefix + args.command}\`: ${this.description}` };
                 } else {
                     let customCmds = args.moduleConf.customCommands;
-                    let name = args.params[0];
+                    let name = args.params[0].toLowerCase();
                     let command = findCustomCommand(name, customCmds);
                     if (command) {
                         let newOut = args.params.slice(1).join(" ");
@@ -99,7 +99,7 @@ module.exports = {
             requiresArgs: true,
             run(msg, args) {
                 let customCmds = args.moduleConf.customCommands;
-                let name = args.params[0];
+                let name = args.params[0].toLowerCase();
                 let command = findCustomCommand(name, customCmds);
                 if (command) {
                     customCmds.splice(customCmds.indexOf(command), 1);
@@ -116,14 +116,26 @@ module.exports = {
             description: "Lists custom commands.",
             run(msg, args) {
                 let customCmds = args.moduleConf.customCommands;
-                let cmdList = customCmds.map(c=>c.name).join(", ");
-                return { text: "Available Custom Commands: " + cmdList };
+                let cmdList = customCmds.map(c => c.name).join(", ");
+                return { text: "Available Custom Commands: " + (customCmds.length === 0 ? "None" : cmdList) };
             }
         }
     ],
     needsConfig: true,
-    confV: 1,
+    confV: 2,
     generateConfig(oldConf, guild) {
+        if (oldConf.version == 1 && oldConf.customCommands) {
+            let names = [];
+            let newCmdList = [];
+            for (let cmd of oldConf.customCommands) {
+                if (cmd && names.indexOf(cmd.name.toLowerCase()) !== 1) {
+                    cmd.name = cmd.name.toLowerCase();
+                    names.push(cmd.name);
+                    newCmdList.push(cmd);
+                }
+            }
+            oldConf.customCommands = newCmdList;
+        }
         oldConf.customCommands = oldConf.customCommands || [];
         oldConf.customAliases = oldConf.customAliases || [];
         oldConf.version = this.confV;

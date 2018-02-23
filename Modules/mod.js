@@ -24,17 +24,31 @@ module.exports = {
                     let user = args.utils.userFind(msg.client, msg.guild, args.paramsJoined) || msg.mentions.users.first();
                     if (user) {
                         let userMember = msg.guild.member(user);
-                        if (userMember.bannable && userMember.highestRole.comparePositionTo(msg.member.highestRole) < 0) {
-                            let modLogChannel = msg.guild.channels.get(args.moduleConf.logChannel);
-                            userMember.ban().then(m => {
-                                args.asyncCallback({ text: `Banned **${userMember.user.username + "#" + userMember.user.discriminator}**.` });
-                                if (modLogChannel) logAction(modLogChannel, "Ban", msg.author, user, args.setModuleConfig, args.config, args.moduleHandler.errorLog);
-                            }).catch(e=> {
+                        let modLogChannel = msg.guild.channels.get(args.moduleConf.logChannel);
+                        if (userMember) {
+                            if (userMember.bannable && userMember.highestRole.comparePositionTo(msg.member.highestRole) < 0) {
+                                userMember.ban().then(m => {
+                                    args.asyncCallback({ text: `Banned **${userMember.user.username + "#" + userMember.user.discriminator}**.` });
+                                    if (modLogChannel) logAction(modLogChannel,
+                                        { type: "ban", user: user, moderator: msg.author },
+                                        args.setModuleConfig, args.config, args.moduleHandler.errorLog);
+                                }).catch(e => {
+                                    args.asyncCallback({ text: "Failed to ban user." });
+                                    args.moduleHandler.errorLog(`${e.name} while banning user: ${e.message}`);
+                                });
+                            } else {
+                                return { text: `**${user.username + "#" + user.discriminator}** can't be banned.` };
+                            }
+                        } else {
+                            msg.guild.ban(user).then(u => {
+                                args.asyncCallback({ text: `Banned **${user.username + "#" + user.discriminator}**.` });
+                                if (modLogChannel) logAction(modLogChannel,
+                                    { type: "ban", user: user, moderator: msg.author },
+                                    args.setModuleConfig, args.config, args.moduleHandler.errorLog);
+                            }).catch(e => {
                                 args.asyncCallback({ text: "Failed to ban user." });
                                 args.moduleHandler.errorLog(`${e.name} while banning user: ${e.message}`);
                             });
-                        } else {
-                            return { text: `**${user.username + "#" + user.discriminator}** can't be banned.` };
                         }
                     } else {
                         return { text: "Can't find user to ban." };
@@ -54,14 +68,16 @@ module.exports = {
             requiresArgs: true,
             run(msg, args) {
                 if (!args.botPerms.has("BAN_MEMBERS")) return { text: "I don't have permissions to ban/unban." };
-                msg.guild.fetchBans().then(list=> {
-                    let userToUnban = list.get(args.params[0]) || list.find(user=>user.username.toLowerCase() + user.discriminator == args.params.join(" ")) || list.find(user=>user.username.toLowerCase() == args.params.join(" "));
+                msg.guild.fetchBans().then(list => {
+                    let userToUnban = list.get(args.params[0]) || list.find(user => user.username.toLowerCase() + user.discriminator == args.params.join(" ")) || list.find(user => user.username.toLowerCase() == args.params.join(" "));
                     if (userToUnban) {
-                        msg.guild.unban(userToUnban).then(user=> {
+                        msg.guild.unban(userToUnban).then(user => {
                             args.asyncCallback({ text: `Unbanned **${user.username + "#" + user.discriminator}**.` });
                             let modLogChannel = msg.guild.channels.get(args.moduleConf.logChannel);
-                            if (modLogChannel) logAction(modLogChannel, "Unban", msg.author, user, args.setModuleConfig, args.config, args.moduleHandler.errorLog);
-                        }).catch(e=> {
+                            if (modLogChannel) logAction(modLogChannel,
+                                { type: "unban", user: userToUnban, moderator: msg.author },
+                                args.setModuleConfig, args.config, args.moduleHandler.errorLog);
+                        }).catch(e => {
                             args.asyncCallback({ text: "Failed to unban user." });
                             args.moduleHandler.errorLog(`${e.name} while unbanning user: ${e.message}`);
                         });
@@ -84,17 +100,23 @@ module.exports = {
                     let user = args.utils.userFind(msg.client, msg.guild, args.paramsJoined) || msg.mentions.users.first();
                     if (user) {
                         let userMember = msg.guild.member(user);
-                        if (userMember.kickable && userMember.highestRole.comparePositionTo(msg.member.highestRole) < 0) {
-                            let modLogChannel = msg.guild.channels.get(args.moduleConf.logChannel);
-                            userMember.kick().then(m => {
-                                args.asyncCallback({ text: `Kicked **${userMember.user.username + "#" + userMember.user.discriminator}**.` });
-                                if (modLogChannel) logAction(modLogChannel, "Kick", msg.author, user, args.setModuleConfig, args.config, args.moduleHandler.errorLog);
-                            }).catch(e=> {
-                                args.asyncCallback({ text: "Failed to kick user." });
-                                args.moduleHandler.errorLog(`${e.name} while kicking user: ${e.message}`);
-                            });
+                        if (userMember) {
+                            if (userMember.kickable && userMember.highestRole.comparePositionTo(msg.member.highestRole) < 0) {
+                                let modLogChannel = msg.guild.channels.get(args.moduleConf.logChannel);
+                                userMember.kick().then(m => {
+                                    args.asyncCallback({ text: `Kicked **${userMember.user.username + "#" + userMember.user.discriminator}**.` });
+                                    if (modLogChannel) logAction(modLogChannel,
+                                        { type: "kick", user: user, moderator: msg.author },
+                                        args.setModuleConfig, args.config, args.moduleHandler.errorLog);
+                                }).catch(e => {
+                                    args.asyncCallback({ text: "Failed to kick user." });
+                                    args.moduleHandler.errorLog(`${e.name} while kicking user: ${e.message}`);
+                                });
+                            } else {
+                                return { text: `**${user.username + "#" + user.discriminator}** can't be kicked.` };
+                            }
                         } else {
-                            return { text: `**${user.username + "#" + user.discriminator}** can't be kicked.` };
+                            return { text: "Can't find user to kick in this server." };
                         }
                     } else {
                         return { text: "Can't find user to kick." };
@@ -102,7 +124,6 @@ module.exports = {
                 } else {
                     return { text: "I don't have permission to kick users." };
                 }
-
             }
         },
         {
@@ -114,9 +135,11 @@ module.exports = {
             usage: "<user> [length]",
             run(msg, args) {
                 if (args.params[0] && args.params[0] != "") { //tf
-                    let user = args.utils.userFind(msg.client, msg.guild, args.params[0]) || msg.mentions.users.first();
+                    let time = args.utils.parseTimeString(args.params[args.params.length - 1]) * 1000;
+                    let user = (time == 0 ? args.utils.userFind(msg.client, msg.guild, args.paramsJoined) : null) ||
+                        args.utils.userFind(msg.client, msg.guild, args.params.slice(0, args.params.length - 1).join(" ")) ||
+                        msg.mentions.users.first();
                     let userMember = msg.guild.member(user);
-                    let time = parseFloat(args.params[1]) * 1000;
                     let timestamp = (args.params[1] && args.params[1] != "") ? Date.now() + (time) : null;
                     let muteRole = msg.guild.roles.get(args.moduleConf.mutedRole);
                     let rolePerms = args.botPerms.has("MANAGE_ROLES");
@@ -128,7 +151,7 @@ module.exports = {
                             return { text: "I don't have permission to create the mute role." };
                         }
                     } else {
-                        if ((time || time == 0) && time < 5000) {
+                        if (time && time < 5000) {
                             return { text: "Mute is too short, minimum is 5 seconds." };
                         } else if (!rolePerms) {
                             return { text: "I don't have permissions to give roles / manage channel permissions." };
@@ -153,15 +176,15 @@ module.exports = {
                                     alreadyMuted = true;
                                 }
                                 if (timestamp) {
+                                    if (!mutes[msg.guild.id]) mutes[msg.guild.id] = [];
                                     let delay = timestamp - Date.now();
-                                    if (mutes[msg.guild.id][user.id]) {
-                                        clearTimeout(mutes[msg.guild.id][user.id]);
-                                        mutes[msg.guild.id][user.id] = null;
-                                    }
+                                    if (mutes[msg.guild.id][user.id]) clearTimeout(mutes[msg.guild.id][user.id]);
                                     mutes[msg.guild.id][user.id] = setTimeout(unmuteUser, delay, userMember, muteRole, args.moduleHandler.errorLog, muteList, muteInfo, args.config);
                                 }
                                 args.setModuleConfig(args.config, "Mod", "mutes", muteList);
-                                if (logChannel) logAction(logChannel, "Mute", msg.author, user, args.setModuleConfig, args.config, args.moduleHandler.errorLog);
+                                if (logChannel) logAction(logChannel,
+                                    { type: "mute", user: user, moderator: msg.author, mute: time ? args.utils.getTime(time / 1000) : null },
+                                    args.setModuleConfig, args.config, args.moduleHandler.errorLog);
                                 userMember.addRole(muteRole).catch(e => {
                                     args.moduleHandler.errorLog(`${e.name} while trying to mute user: ${e.message}`);
                                     args.asyncCallback("Failed to mute user.");
@@ -210,7 +233,7 @@ module.exports = {
                     if (userMember) {
                         for (let muteObj of muteList) {
                             if (muteObj.user == user.id) {
-                                if (mutes[msg.guild.id][user.id]) {
+                                if (mutes[msg.guild.id] && mutes[msg.guild.id][user.id]) {
                                     clearTimeout(mutes[msg.guild.id][user.id]);
                                     mutes[msg.guild.id][user.id] = null;
                                 }
@@ -244,7 +267,7 @@ module.exports = {
                     };
                 } else {
                     let channels = msg.guild.channels;
-                    let channel = channels.get(args.paramsJoined) || channels.find("name", args.paramsJoined);
+                    let channel = channels.get(args.paramsJoined) || channels.find("name", args.paramsJoined) || msg.mentions.channels.first();
                     if (channel) {
                         args.setModuleConfig(args.config, "Mod", "logChannel", channel.id);
                         return { text: `Set moderation log channel to ${channel}.` };
@@ -260,7 +283,7 @@ module.exports = {
         {
             name: "addrole",
             description: "Gives a role to a user.",
-            perms: ["roles"],
+            perms: "roles",
             aliases: ["giverole", "roleadd"],
             usage: "<user> <role>",
             noPermsMessage: true,
@@ -278,11 +301,11 @@ module.exports = {
                     if (!args.botPerms.has("MANAGE_ROLES")) return { text: "I can't give roles." };
                     if (msg.member.highestRole.comparePositionTo(role) > 0) {
                         if (msg.guild.member(msg.client.user).highestRole.comparePositionTo(role) > 0) {
-                            user.addRole(role).then(r=> {
+                            user.addRole(role).then(r => {
                                 args.asyncCallback({ text: `Role **${role.name}** was given to **${user.user.username + "#" + user.user.discriminator}**.` });
                                 logChannel = msg.guild.channels.get(args.moduleConf.logChannel);
                                 if (logChannel) logChannel.send(`Role **${role.name}** was given to **${user.user.username + "#" + user.user.discriminator}** by **${msg.author.username + "#" + msg.author.discriminator}**.`).catch(args.errLogger);
-                            }).catch(e=> {
+                            }).catch(e => {
                                 args.asyncCallback({ text: "Failed to give role." });
                                 args.errLogger(e.name + " on addRole: " + e.message);
                             })
@@ -301,7 +324,7 @@ module.exports = {
         {
             name: "removerole",
             description: "Removes a role from a user.",
-            perms: ["roles"],
+            perms: "roles",
             aliases: ["rrole", "remrole", "takerole"],
             usage: "<user> <role>",
             requiresArgs: true,
@@ -320,11 +343,11 @@ module.exports = {
                         if (!args.botPerms.has("MANAGE_ROLES")) return { text: "I can't give/remove roles." };
                         if (msg.member.highestRole.comparePositionTo(role) > 0) {
                             if (msg.guild.member(msg.client.user).highestRole.comparePositionTo(role) > 0) {
-                                user.removeRole(role).then(r=> {
+                                user.removeRole(role).then(r => {
                                     args.asyncCallback({ text: `Role **${role.name}** was taken from **${user.user.username + "#" + user.user.discriminator}**.` });
                                     logChannel = msg.guild.channels.get(args.moduleConf.logChannel);
                                     if (logChannel) logChannel.send(`Role **${role.name}** was taken from **${user.user.username + "#" + user.user.discriminator}** by **${msg.author.username + "#" + msg.author.discriminator}**.`).catch(args.errLogger);
-                                }).catch(e=> {
+                                }).catch(e => {
                                     args.asyncCallback({ text: "Failed to remove role." });
                                     args.errLogger(e.name + " on removeRole: " + e.message);
                                 })
@@ -344,7 +367,7 @@ module.exports = {
             name: "clear",
             description: "Clears up to 100 messages.",
             aliases: ["delete", "purge"],
-            perms: ["messages"],
+            perms: "messages",
             noPermsMessage: true,
             requiresArgs: true,
             usage: "<count>",
@@ -352,15 +375,39 @@ module.exports = {
                 if (args.channelPerms.has("MANAGE_MESSAGES") && args.channelPerms.has("READ_MESSAGE_HISTORY")) {
                     let deleteCount = parseInt(args.params[0]);
                     if (deleteCount && deleteCount > 0 && !isNaN(deleteCount)) {
-                        msg.channel.bulkDelete(Math.min(deleteCount + 1, 100), true).then(m=> {
-                            args.asyncCallback({ text: `Deleted ${Math.max(m.size - 1, 0)} message${m.size == 2 ? "" : "s"}. :thumbsup:` }).then(m=>m.delete(5000));
-                        }).catch(e=> {
+                        msg.channel.bulkDelete(Math.min(deleteCount + 1, 100), true).then(m => {
+                            args.asyncCallback({ text: `Deleted ${Math.max(m.size - 1, 0)} message${m.size == 2 ? "" : "s"}. :thumbsup:` }).then(m => m.delete(5000));
+                        }).catch(e => {
                             args.asyncCallback({ text: "Failed to clear messages." });
                             args.moduleHandler.errorLog(`${e.name} while clearing messages: ${e.message}`);
                         });
                     }
                 } else {
                     return { text: "I don't have permissions to delete messages or read message history." };
+                }
+            }
+        },
+        {
+            name: "reason",
+            description: "Sets a reason for the last moderation action.",
+            perms: "mod",
+            noPermsMessage: true,
+            requiresArgs: true,
+            usage: "<reason>",
+            run(msg, args) {
+                let lastModCase = args.moduleConf.lastModCase;
+                if (lastModCase) {
+                    lastModCase.data.reason = args.paramsJoined;
+                    let channel = msg.guild.channels.get(lastModCase.channel);
+                    if (channel) {
+                        channel.fetchMessage(lastModCase.message).then(m => {
+                            let caseArgs = Object.assign({ message: m }, lastModCase.data)
+                            caseArgs.user = m.client.users.get(lastModCase.data.user);
+                            caseArgs.moderator = m.client.users.get(lastModCase.data.moderator);
+                            logAction(channel, caseArgs, args.setModuleConfig, args.config, args.moduleHandler.errorLog);
+                            args.asyncCallback({ text: `Set the last moderation case reason to "${args.paramsJoined}"` });
+                        }).catch(args.moduleHandler.errorLog);
+                    }
                 }
             }
         }
@@ -384,33 +431,33 @@ module.exports = {
         return oldConfig.version != this.confV;
     },
     handle(eventType, eventArgs, Discord, Client, Config) {
-        if (eventType == "guild_init") {
-            if (eventArgs.moduleConfig) {
-                let mutes = eventArgs.moduleConfig.mutes;
-                let muteRole = eventArgs.moduleConfig.mutedRole;
-                let guild = eventArgs.guild;
-                if (!(muteRole && guild.roles.get(muteRole))) {
-                    let role = guild.roles.find(role => { return role.name.toLowerCase() == "caspermuted" }) || guild.roles.find(role => { return role.name.toLowerCase().includes("muted") });
-                    if (role) {
-                        muteRole = role.id;
-                    } else {
-                        muteRole = "";
-                    }
-                    eventArgs.config.saveValue("moduleData.Mod.mutedRole", muteRole);
+        if (eventType == "guild_init" && eventArgs.moduleConfig) {
+            let muteList = eventArgs.moduleConfig.mutes;
+            let muteRole = eventArgs.moduleConfig.mutedRole;
+            let guild = eventArgs.guild;
+            if (!(muteRole && guild.roles.get(muteRole))) {
+                let role = guild.roles.find(role => { return role.name.toLowerCase() == "caspermuted" }) || guild.roles.find(role => { return role.name.toLowerCase().includes("muted") });
+                if (role) {
+                    muteRole = role.id;
+                } else {
+                    muteRole = "";
                 }
-                if (mutes && mutes.length != 0) {
-                    muteRole = guild.roles.get(muteRole);
-                    if (muteRole) {
-                        for (let mute of mutes) {
-                            if (mute.timestamp) {
-                                let delay = mute.timestamp - Date.now();
-                                let user = guild.members.get(mute.user);
-                                if (user) {
-                                    if (delay < 5) {
-                                        unmuteUser(user, muteRole, eventArgs.errLogger, mutes, mute, eventArgs.config);
-                                    } else {
-                                        mutesArray.push(setTimeout(unmuteUser, delay, user, muteRole, eventArgs.errLogger, mutes, mute, eventArgs.config));
-                                    }
+                eventArgs.config.saveValue("moduleData.Mod.mutedRole", muteRole);
+            }
+            if (muteList && muteList.length != 0) {
+                muteRole = guild.roles.get(muteRole);
+                if (muteRole) {
+                    for (let mute of muteList) {
+                        if (mute.timestamp) {
+                            let delay = mute.timestamp - Date.now();
+                            let user = guild.members.get(mute.user);
+                            if (user) {
+                                if (delay < 5) {
+                                    unmuteUser(user, muteRole, eventArgs.errLogger, muteList, mute, eventArgs.config);
+                                } else {
+                                    if (!mutes[guild.id]) mutes[guild.id] = [];
+                                    if (mutes[guild.id][user.id]) clearTimeout(mutes[guild.id][user.id]);
+                                    mutes[guild.id][user.id] = setTimeout(unmuteUser, delay, user, muteRole, eventArgs.errLogger, mutes, mute, eventArgs.config);
                                 }
                             }
                         }
@@ -438,16 +485,43 @@ function makeMuteRole(guild, botMember, callback) {
     }).catch(e => console.error("[MOD:Mod]: Can't create mute role for some reason; " + e.name + ": " + e.message));
 }
 
-function logAction(channel, type, moderator, user, configSet, config, errorLog) { //TODO: Completely remake this
-    if (channel && type && moderator && user && configSet && errorLog) {
-        try {
-            channel.send(`Action: **${type}**\nModerator: **${moderator.username + "#" + moderator.discriminator + " (" + moderator.id + ")"}**\nUser: **${user.username + "#" + user.discriminator + " (" + user.id + ")"}**`).catch(e => errorLog(e));
-            configSet(config, "Mod", "lastModCase", {
-                user: user.id, mod: moderator.id, action: type, reason: "None"
-            });
-            //TODO: Reasons and stuff
-        } catch (e) {
-            errorLog(e.name + " while logging " + type + " action: " + e.message);
+function logAction(channel, actionData, configSet, config, errorLog) {
+    try {
+        if (actionData) {
+            let saveData = Object.assign({}, actionData);
+            saveData.user = actionData.user.id;
+            saveData.moderator = actionData.moderator.id;
+            if (saveData.message) saveData.message = null;
+            let logger = (actionData.message ? actionData.message.edit.bind(actionData.message) : channel.send.bind(channel));
+            switch (actionData.type) {
+                case "ban":
+                case "kick":
+                case "unban":
+                    logger(`**${actionData.user.username + "#" + actionData.user.discriminator}** was **${actionData.type == "kick" ? "kicked" : (actionData.type == "ban" ? "banned" : "unbanned")}**` +
+                        ` by **${actionData.moderator.username + "#" + actionData.moderator.discriminator}**${actionData.reason ? ` for "${actionData.reason}"` : ""}.`)
+                        .catch(errorLog)
+                        .then(m => configSet(config, "Mod", "lastModCase", {
+                            message: m.id, channel: channel.id, data: saveData
+                        }));
+                    break;
+                case "mute":
+                    logger(`**${actionData.user.username + "#" + actionData.user.discriminator}** was muted${actionData.mute ? ` for **${actionData.mute}**` : ""}` +
+                        ` by **${actionData.moderator.username + "#" + actionData.moderator.discriminator}**${actionData.reason ? ` for "${actionData.reason}"` : ""}.`)
+                        .catch(errorLog)
+                        .then(m => configSet(config, "Mod", "lastModCase", {
+                            message: m.id, channel: channel.id, data: saveData
+                        }));
+                    break;
+                default:
+                    logger(`**Action**: ${actionData.type}\n**User**:${actionData.user.username + "#" + actionData.user.discriminator}\n**Moderator**: ${actionData.moderator.username + "#" + actionData.moderator.discriminator}${actionData.reason ? `\n**Reason**: "${actionData.reason}"` : ""}.`)
+                        .catch(errorLog)
+                        .then(m => configSet(config, "Mod", "lastModCase", {
+                            message: m.id, channel: channel.id, data: saveData
+                        }));
+                    break;
+            }
         }
+    } catch (e) {
+        errorLog(e.name + " while logging " + actionData.type + " action: " + e.message);
     }
 }
